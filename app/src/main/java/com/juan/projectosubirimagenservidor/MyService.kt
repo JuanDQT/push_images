@@ -48,7 +48,6 @@ class MyService {
     fun uploadImage(partFile: MultipartBody.Part, otroParametro: RequestBody) {
 
         service.uploadImage(partFile, otroParametro).enqueue(object : Callback<ResponseBody> {
-//        service.uploadImage(partFile, fileName).enqueue(object : Callback<ResponseBody> {
 
             override fun onFailure(call: Call<ResponseBody>?, t: Throwable?) {
                 Log.d(TAGGER, "Error " + t?.message)
@@ -57,7 +56,6 @@ class MyService {
             override fun onResponse(call: Call<ResponseBody>?, response: Response<ResponseBody>?) {
                 Log.d(TAGGER, "Response " + response?.raw()?.message())
             }
-
         } )
 
     }

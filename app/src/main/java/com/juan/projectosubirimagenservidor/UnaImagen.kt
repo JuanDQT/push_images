@@ -34,7 +34,7 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     private val CAMERA_REQUEST_CODE = 400
     private val TAGGER = "TAGGER"
     private var filePath: String? = null
-    private val FOLDER_NAME = "APP"
+    private val FOLDER_NAME = ".juan"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,6 +82,7 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
             saveFile(photo)?.let {
                 filePath = it
+                btnDelete.visibility = View.VISIBLE
             }
         }
 
@@ -115,11 +116,13 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
         } else {
             val folder = File(Environment.getExternalStorageDirectory(), FOLDER_NAME)
-//            val folder = File(Environment.getExternalStorageState(), FOLDER_NAME)
+
+            if (!File(folder, ".nomedia").exists())
+                File(folder,".nomedia").createNewFile()
             folder.mkdirs()
             if (folder.exists()) {
 
-                val df = SimpleDateFormat("dd_mm_yyyy");
+                val df = SimpleDateFormat("dd_mm_yyyy_HH_MM_ss")
                 val formattedDate = df.format(Calendar.getInstance().time)
 
                 file = File(folder,  formattedDate + ".jpg")
@@ -168,7 +171,6 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         when (item!!.itemId) {
             R.id.itmSubir -> {
-                Toast.makeText(this, "Subimos", Toast.LENGTH_SHORT).show()
 
                 filePath?.let {
                     val file = File(it)
