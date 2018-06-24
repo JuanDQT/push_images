@@ -114,7 +114,7 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         if (Common.hasMemorySD()) {
 
         } else {
-            val folder = File(Environment.getExternalStorageDirectory().path, FOLDER_NAME)
+            val folder = File(Environment.getExternalStorageDirectory(), FOLDER_NAME)
 //            val folder = File(Environment.getExternalStorageState(), FOLDER_NAME)
             folder.mkdirs()
             if (folder.exists()) {
