@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">ProjectoSubirImagenServidor</string>
+    <string name="read_permission">Esta aplicacion necesita accceso a tu almacenamienti.</string>
+    <string name="camera_permision">Esta aplicacion necesita accceso a tu almacenamienti.</string>
+</resources>
