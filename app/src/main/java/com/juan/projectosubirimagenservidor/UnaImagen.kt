@@ -3,11 +3,11 @@ package com.juan.projectosubirimagenservidor
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.database.Cursor
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
@@ -20,21 +20,29 @@ import java.io.File
 import android.graphics.BitmapFactory
 import android.os.Environment
 import android.view.View
-import pub.devrel.easypermissions.AppSettingsDialog
-import java.util.logging.Logger
 import android.graphics.Bitmap
+import android.os.Build
+import android.support.v4.content.FileProvider
+import android.util.Log
+import com.squareup.picasso.Callback
+import com.squareup.picasso.Picasso
+import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.io.FileOutputStream
+import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.*
 
 
 class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
-    private val WRITE_REQUEST_CODE = 300
+    private val PERMISSION_WRITE_REQUEST_CODE = 1
+    private val GALLERY_REQUEST_CODE = 300
     private val CAMERA_REQUEST_CODE = 400
     private val TAGGER = "TAGGER"
     private var filePath: String? = null
     private val FOLDER_NAME = ".juan"
+    private var uriFromCamera: Uri? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,7 +53,7 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             if (EasyPermissions.hasPermissions(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
                 abrirGaleria()
             } else {
-                EasyPermissions.requestPermissions(this, getString(R.string.read_permission), WRITE_REQUEST_CODE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                EasyPermissions.requestPermissions(this, getString(R.string.read_permission), PERMISSION_WRITE_REQUEST_CODE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }
         }
 
@@ -63,9 +71,11 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
-        if (requestCode == WRITE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            val uri = data.data
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == GALLERY_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            val uri = data?.data
             filePath = getRealPathFromURIPath(uri!!)
 
             val myBitmap = BitmapFactory.decodeFile(filePath)
@@ -74,17 +84,23 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             btnDelete.visibility = View.VISIBLE
         }
 
-        if (requestCode == CAMERA_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            Toast.makeText(this@UnaImagen, "hasMemorySD: " + Common.hasMemorySD(), Toast.LENGTH_SHORT).show()
+        if (requestCode == CAMERA_REQUEST_CODE) {
 
-            val photo= data.getExtras().get("data") as Bitmap
-            ivPicture.setImageBitmap(photo)
+            if (resultCode == Activity.RESULT_OK) {
+                Toast.makeText(this@UnaImagen, "hasMemorySD: " + Common.hasMemorySD(), Toast.LENGTH_SHORT).show()
 
-            saveFile(photo)?.let {
-                filePath = it
-                btnDelete.visibility = View.VISIBLE
+                uriFromCamera?.let {
+                    val file = File(it.path)
+                    filePath = file.path
+
+                    Picasso.get().load(it).into(ivPicture)
+                    btnDelete.visibility = View.VISIBLE
+                }
+            } else {
+                uriFromCamera = null
             }
         }
+
 
     }
 
@@ -100,14 +116,60 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     }
 
     fun abrirCamara() {
-        val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        startActivityForResult(cameraIntent, CAMERA_REQUEST_CODE);
+
+        getUriToSave()?.let {
+            val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+                // Solo lo sobreescribimos para darle un valor temporal
+                uriFromCamera = FileProvider.getUriForFile(this@UnaImagen, packageName + ".provider", it)
+            } else {
+                uriFromCamera = Uri.fromFile(it)
+            }
+            cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, uriFromCamera)
+            startActivityForResult(cameraIntent, CAMERA_REQUEST_CODE)
+
+            // Devolvemos el valor al uri de path file
+            uriFromCamera = Uri.fromFile(it)
+        }
     }
 
     fun abrirGaleria() {
         val openGalleryIntent = Intent(Intent.ACTION_PICK)
         openGalleryIntent.type = "image/*"
-        startActivityForResult(openGalleryIntent, WRITE_REQUEST_CODE)
+        startActivityForResult(openGalleryIntent, GALLERY_REQUEST_CODE)
+    }
+
+    fun getUriToSave(): File? {
+        var file: File? = null
+        if (Common.hasMemorySD()) {
+
+        } else {
+            val folder = File(Environment.getExternalStorageDirectory(), FOLDER_NAME)
+
+
+            if (folder.exists()) {
+
+                if (!File(folder, ".nomedia").exists())
+                    File(folder, ".nomedia").createNewFile()
+                folder.mkdirs()
+
+                val df = SimpleDateFormat("dd_mm_yyyy_HH_MM_ss")
+                val formattedDate = df.format(Calendar.getInstance().time)
+
+                file = File(folder, formattedDate + ".jpg")
+
+            }
+        }
+
+        file?.let {
+            if (it.exists()) {
+                //it.delete()
+            }
+            return it
+        }
+        return null
+
     }
 
     fun saveFile(imageToSave: Bitmap): String? {
@@ -117,15 +179,17 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         } else {
             val folder = File(Environment.getExternalStorageDirectory(), FOLDER_NAME)
 
-            if (!File(folder, ".nomedia").exists())
-                File(folder,".nomedia").createNewFile()
-            folder.mkdirs()
+
             if (folder.exists()) {
+
+                if (!File(folder, ".nomedia").exists())
+                    File(folder, ".nomedia").createNewFile()
+                folder.mkdirs()
 
                 val df = SimpleDateFormat("dd_mm_yyyy_HH_MM_ss")
                 val formattedDate = df.format(Calendar.getInstance().time)
 
-                file = File(folder,  formattedDate + ".jpg")
+                file = File(folder, formattedDate + ".jpg")
                 Toast.makeText(this@UnaImagen, "NO EXISTE", Toast.LENGTH_SHORT).show()
 
             }
@@ -133,7 +197,7 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
         file?.let {
             if (it.exists()) {
-                it.delete()
+                //it.delete()
             }
             try {
                 val out = FileOutputStream(file)
@@ -148,7 +212,6 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         }
         return null
     }
-
     // MARK: PERMISOS
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
