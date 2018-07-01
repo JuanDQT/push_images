@@ -23,7 +23,7 @@ interface API {
     fun uploadImage(@Part file: MultipartBody.Part, @Part("name") name: RequestBody): Call<ResponseBody>
 
     @Multipart
-    @POST("FullUpdate.php")
+    @POST("SubirMultipleImagenes.php")
     fun fullUpload(@Part files: List<MultipartBody.Part>): Call<ResponseBody>
 //    fun fullUpload(@Part file: List<MultipartBody.Part>, @Part("idIncidencia") idIncidencia: RequestBody): Call<ResponseBody>
 //    fun fullUpload(@Part file: List<MultipartBody.Part>, @Part("idIncidencia") idIncidencia: RequestBody): Call<ResponseBody>

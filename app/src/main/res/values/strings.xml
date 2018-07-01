@@ -1,5 +1,9 @@
 <resources>
     <string name="app_name">ProjectoSubirImagenServidor</string>
-    <string name="read_permission">Esta aplicacion necesita accceso a tu almacenamienti.</string>
-    <string name="camera_permision">Esta aplicacion necesita accceso a tu almacenamienti.</string>
+    <string name="read_permission">Esta aplicación necesita accceso a tu almacenamientio.</string>
+    <string name="camera_permision">Esta aplicación necesita accceso a tu camara.</string>
+    <string name="all_permision">Esta aplicación necesita accceso a tu camara y almacenamiento.</string>
+    <string name="load_all_images">Cargar imagenes</string>
+    <string name="delete">Eliminar</string>
+    <string name="select_photos">Seleccione las fotos...</string>
 </resources>

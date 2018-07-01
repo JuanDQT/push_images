@@ -7,28 +7,28 @@
     tools:context=".MultipleImagen">
 
     <Button
-        android:id="@+id/btnSingle"
+        android:id="@+id/btnAll"
         android:layout_width="180dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:text="Galeria"
-        app:layout_constraintEnd_toStartOf="@+id/btnMultiple"
+        android:text="@string/load_all_images"
+        app:layout_constraintEnd_toStartOf="@+id/btnDelete"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintHorizontal_chainStyle="spread_inside"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/btnMultiple"
+        android:id="@+id/btnDelete"
         android:layout_width="180dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginTop="8dp"
-        android:text="Camara"
+        android:text="@string/delete"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/btnSingle"
+        app:layout_constraintStart_toEndOf="@+id/btnAll"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
@@ -38,10 +38,23 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:text="TextView"
+        tools:text = "sape"
+        android:text="Total images: 0"
         android:textAlignment="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnSingle" />
+        app:layout_constraintTop_toBottomOf="@+id/btnDelete" />
+
+    <ImageView
+        android:id="@+id/ivTemp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvTotal"
+        app:srcCompat="@mipmap/ic_launcher" />
 
 </android.support.constraint.ConstraintLayout>

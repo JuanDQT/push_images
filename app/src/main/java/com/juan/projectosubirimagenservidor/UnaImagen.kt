@@ -3,7 +3,6 @@ package com.juan.projectosubirimagenservidor
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
-import android.database.Cursor
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -20,16 +19,9 @@ import java.io.File
 import android.graphics.BitmapFactory
 import android.os.Environment
 import android.view.View
-import android.graphics.Bitmap
 import android.os.Build
 import android.support.v4.content.FileProvider
-import android.util.Log
-import com.squareup.picasso.Callback
 import com.squareup.picasso.Picasso
-import java.io.FileInputStream
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
-import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -37,6 +29,8 @@ import java.util.*
 class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     private val PERMISSION_WRITE_REQUEST_CODE = 1
+    private val PERMISSION_CAMERA_REQUEST_CODE = 2
+    private val PERMISSION_ALL = 3
     private val GALLERY_REQUEST_CODE = 300
     private val CAMERA_REQUEST_CODE = 400
     private val TAGGER = "TAGGER"
@@ -58,10 +52,11 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         }
 
         btnCamera.setOnClickListener {
-            if (EasyPermissions.hasPermissions(this, Manifest.permission.CAMERA)) {
+            if (EasyPermissions.hasPermissions(this, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA)) {
+//            if (EasyPermissions.hasPermissions(this, Manifest.permission.CAMERA)) {
                 abrirCamara()
             } else {
-                EasyPermissions.requestPermissions(this, getString(R.string.camera_permision), CAMERA_REQUEST_CODE, Manifest.permission.CAMERA)
+                EasyPermissions.requestPermissions(this, getString(R.string.all_permision), PERMISSION_ALL, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA)
             }
         }
 
@@ -115,6 +110,7 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         }
     }
 
+    // REFERENCE: https://inthecheesefactory.com/blog/how-to-share-access-to-file-with-fileprovider-on-android-nougat/en
     fun abrirCamara() {
 
         getUriToSave()?.let {
@@ -164,7 +160,7 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
         file?.let {
             if (it.exists()) {
-                //it.delete()
+                it.delete()
             }
             return it
         }
@@ -172,57 +168,17 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     }
 
-    fun saveFile(imageToSave: Bitmap): String? {
-        var file: File? = null
-        if (Common.hasMemorySD()) {
-
-        } else {
-            val folder = File(Environment.getExternalStorageDirectory(), FOLDER_NAME)
-
-
-            if (folder.exists()) {
-
-                if (!File(folder, ".nomedia").exists())
-                    File(folder, ".nomedia").createNewFile()
-                folder.mkdirs()
-
-                val df = SimpleDateFormat("dd_mm_yyyy_HH_MM_ss")
-                val formattedDate = df.format(Calendar.getInstance().time)
-
-                file = File(folder, formattedDate + ".jpg")
-                Toast.makeText(this@UnaImagen, "NO EXISTE", Toast.LENGTH_SHORT).show()
-
-            }
-        }
-
-        file?.let {
-            if (it.exists()) {
-                //it.delete()
-            }
-            try {
-                val out = FileOutputStream(file)
-                imageToSave.compress(Bitmap.CompressFormat.JPEG, 100, out)
-                out.flush()
-                out.close()
-
-                return file.path
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-        return null
-    }
     // MARK: PERMISOS
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
     }
 
     override fun onPermissionsGranted(requestCode: Int, list: List<String>) {
-        if (requestCode == 300) {
+        if (requestCode == PERMISSION_WRITE_REQUEST_CODE) {
             abrirGaleria()
         }
-        if (requestCode == 400) {
+        if (requestCode == PERMISSION_ALL && list.count() > 1) {
             abrirCamara()
         }
     }
