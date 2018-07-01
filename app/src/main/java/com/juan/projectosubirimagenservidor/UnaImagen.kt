@@ -125,7 +125,8 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, uriFromCamera)
             startActivityForResult(cameraIntent, CAMERA_REQUEST_CODE)
 
-            // Devolvemos el valor al uri de path file
+            // Devolvemos el valor al uri de path file.
+            // TODO: cargarlo con URI de geabsolute.. de mutlieimagen?
             uriFromCamera = Uri.fromFile(it)
         }
     }
@@ -143,6 +144,8 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         } else {
             val folder = File(Environment.getExternalStorageDirectory(), FOLDER_NAME)
 
+            if (!folder.exists())
+                folder.mkdirs()
 
             if (folder.exists()) {
 
