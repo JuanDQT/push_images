@@ -6,6 +6,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Environment;
 
+import com.androidnetworking.AndroidNetworking;
+
 
 public class Common extends Application {
 
@@ -15,6 +17,7 @@ public class Common extends Application {
     public void onCreate() {
         this.context = getApplicationContext();
         super.onCreate();
+        AndroidNetworking.initialize(getApplicationContext());
     }
 
     public static Context getContext() {

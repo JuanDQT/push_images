@@ -19,7 +19,6 @@ interface API {
 
     @Multipart
     @POST("SubirImagen.php")
-//    fun uploadImage(@Part file: MultipartBody.Part): Call<ResponseBody>
     fun uploadImage(@Part file: MultipartBody.Part, @Part("name") name: RequestBody): Call<ResponseBody>
 
     @Multipart
