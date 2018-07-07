@@ -2,6 +2,7 @@ package com.juan.projectosubirimagenservidor
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
@@ -10,25 +11,34 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
+import com.androidnetworking.AndroidNetworking
+import com.androidnetworking.common.ANRequest
+import com.androidnetworking.common.Priority
+import com.androidnetworking.error.ANError
+import com.androidnetworking.interfaces.JSONObjectRequestListener
+import com.androidnetworking.interfaces.UploadProgressListener
+import com.androidnetworking.internal.ANRequestQueue
 import com.squareup.picasso.Callback
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_multiple_imagen.*
 import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import org.json.JSONObject
 import pub.devrel.easypermissions.EasyPermissions
 import java.io.File
 import java.lang.Exception
 
-class MultipleImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
+class MultipleImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks, UploadProgressListener, JSONObjectRequestListener {
 
     private val PERMISSION_READ_REQUEST_CODE = 1
     private val GALLERY_REQUEST_CODE = 200
-    private var uri: Uri? = null
     private val TAGGER = "TAGGER"
     private var imagePaths: ArrayList<String> = arrayListOf()
-
+    private var dialogPercent: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,7 +95,6 @@ class MultipleImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks 
             }
 
 
-
         }
     }
 
@@ -114,37 +123,33 @@ class MultipleImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         when (item!!.itemId) {
             R.id.itmSubir -> {
+
+                if (!Common().isOnline) {
+                    return true
+                }
+
+                createOrUpdateDialog()
+
                 Toast.makeText(this, "Subimos", Toast.LENGTH_SHORT).show()
-                val parts: ArrayList<MultipartBody.Part> = arrayListOf()
+
+                val mapParts = mutableMapOf<String, File>()
+
                 if (imagePaths.count() > 0) {
 
-                    for (path in imagePaths) {
+                    for ((index, path) in imagePaths.withIndex()) {
                         val file = File(path)
-                        val fileToUpload = MultipartBody.Part.createFormData("files[]", "MMM" + file.name, RequestBody.create(MediaType.parse("image/*"), file))
-                        parts.add(fileToUpload)
+                        mapParts.put("files[$index]", file)
                     }
-                    val idIncidencia = RequestBody.create(MediaType.parse("text/plain"), "999")
-                    MyService().fullUpdload(parts, idIncidencia)
+
+                    AndroidNetworking.upload("http://192.168.1.116/ApiPruebas/SubirMultipleImagenes.php")
+                            .addMultipartFile(mapParts.toMap())
+                            .addMultipartParameter("key", "value")
+                            .setTag("uploadTest")
+                            .setPriority(Priority.HIGH)
+                            .build()
+                            .setUploadProgressListener(this).getAsJSONObject(this)
 
                 }
-                // TODO: RECOGER TODAS LAS FOTOS Y SUBIRLAS.
-                // TODO: ACABADO ESTO, VALIDAR CON LA VERSION < N DE ANDROID
-
-
-//                val filePath = getRealPathFromURIPath(uri!!)
-//                val file = File(filePath)
-//                val file2 = File(filePath)
-//                Log.d(TAGGER, "Filename " + file.getName())
-////                val mFile = RequestBody.create(MediaType.parse("multipart/form-data"), file);
-//                val mFile = RequestBody.create(MediaType.parse("image/*"), file)
-//
-//                val fileToUpload1 = MultipartBody.Part.createFormData("files[]", "ABC" + file.getName(), RequestBody.create(MediaType.parse("image/*"), file))
-//                val fileToUpload12 = MultipartBody.Part.createFormData("files[]", "CDE" + file.getName(), RequestBody.create(MediaType.parse("image/*"), file2))
-//
-////                part = MultipartBody.Part.createFormData("file", file.getName(), RequestBody.create(MediaType.parse("image/*"), file));
-
-
-//                Service().updateImage(fileToUpload, filename)
             }
         }
         return true
@@ -164,6 +169,42 @@ class MultipleImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks 
             val idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA)
             return cursor.getString(idx)
         }
+    }
+
+    fun createOrUpdateDialog(percent: Int = 0) {
+
+        dialogPercent?.let {
+            val pb = it.findViewById<ProgressBar>(R.id.pbLoading) as ProgressBar
+            val desc = it.findViewById<TextView>(R.id.tvDescription) as TextView
+
+            pb.setProgress(percent)
+            desc.text = "$percent %"
+
+            return
+        }
+
+        val builder = AlertDialog.Builder(this@MultipleImagen)
+        val view = layoutInflater.inflate(R.layout.ad_progress, null)
+        builder.setView(view)
+        dialogPercent = builder.create()
+        dialogPercent?.show()
+    }
+
+    // MARK: Progress uploader methods
+
+    override fun onProgress(bytesUploaded: Long, totalBytes: Long) {
+        val percent = 100 * bytesUploaded / totalBytes
+        createOrUpdateDialog(percent.toInt())
+    }
+
+
+    override fun onResponse(response: JSONObject?) {
+        dialogPercent?.dismiss()
+        dialogPercent = null
+    }
+
+    override fun onError(anError: ANError?) {
+        Log.e(TAGGER, "[ERROR]")
     }
 
 }
