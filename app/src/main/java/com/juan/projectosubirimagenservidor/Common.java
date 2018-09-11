@@ -8,6 +8,10 @@ import android.os.Environment;
 
 import com.androidnetworking.AndroidNetworking;
 
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.OkHttpClient;
+
 
 public class Common extends Application {
 
@@ -17,7 +21,14 @@ public class Common extends Application {
     public void onCreate() {
         this.context = getApplicationContext();
         super.onCreate();
-        AndroidNetworking.initialize(getApplicationContext());
+
+        OkHttpClient okHttpClient = new OkHttpClient().newBuilder()
+                .connectTimeout(3, TimeUnit.SECONDS)
+                .readTimeout(120, TimeUnit.SECONDS)
+                . writeTimeout(120, TimeUnit.SECONDS)
+                .build();
+
+        AndroidNetworking.initialize(getApplicationContext(),okHttpClient);
     }
 
     public static Context getContext() {

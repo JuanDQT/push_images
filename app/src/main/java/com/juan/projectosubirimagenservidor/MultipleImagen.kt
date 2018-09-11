@@ -21,6 +21,7 @@ import com.androidnetworking.error.ANError
 import com.androidnetworking.interfaces.JSONObjectRequestListener
 import com.androidnetworking.interfaces.UploadProgressListener
 import com.androidnetworking.internal.ANRequestQueue
+import com.asksira.bsimagepicker.BSImagePicker
 import com.squareup.picasso.Callback
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_multiple_imagen.*
@@ -32,7 +33,7 @@ import pub.devrel.easypermissions.EasyPermissions
 import java.io.File
 import java.lang.Exception
 
-class MultipleImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks, UploadProgressListener, JSONObjectRequestListener {
+class MultipleImagen : AppCompatActivity(), BSImagePicker.OnMultiImageSelectedListener, EasyPermissions.PermissionCallbacks, UploadProgressListener, JSONObjectRequestListener {
 
     private val PERMISSION_READ_REQUEST_CODE = 1
     private val GALLERY_REQUEST_CODE = 200
@@ -99,11 +100,20 @@ class MultipleImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks,
     }
 
     fun abrirGaleria() {
-        val openGalleryIntent = Intent(Intent.EXTRA_ALLOW_MULTIPLE)
-        openGalleryIntent.type = "image/*"
-        openGalleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-        openGalleryIntent.action = Intent.ACTION_GET_CONTENT
-        startActivityForResult(Intent.createChooser(openGalleryIntent, getString(R.string.select_photos)), GALLERY_REQUEST_CODE)
+
+        val multiSelectionPicker = BSImagePicker.Builder("com.juan.projectosubirimagenservidor.provider_paths")
+                .isMultiSelect() //Set this if you want to use multi selection mode.
+                .setMinimumMultiSelectCount(3) //Default: 1.
+                .setMaximumMultiSelectCount(6) //Default: Integer.MAX_VALUE (i.e. User can select as many images as he/she wants)
+                .setMultiSelectBarBgColor(android.R.color.white) //Default: #FFFFFF. You can also set it to a translucent color.
+                .setMultiSelectTextColor(R.color.primary_text) //Default: #212121(Dark grey). This is the message in the multi-select bottom bar.
+                .setMultiSelectDoneTextColor(R.color.colorAccent) //Default: #388e3c(Green). This is the color of the "Done" TextView.
+                .setOverSelectTextColor(R.color.error_text) //Default: #b71c1c. This is the color of the message shown when user tries to select more than maximum select count.
+                .disableOverSelectionMessage() //You can also decide not to show this over select message.
+                .build();
+
+        multiSelectionPicker.show(getSupportFragmentManager(), "picker");
+
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -206,5 +216,14 @@ class MultipleImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks,
     override fun onError(anError: ANError?) {
         Log.e(TAGGER, "[ERROR]")
     }
+
+    override fun onMultiImageSelected(uriList: MutableList<Uri>?) {
+
+        imagePaths.addAll(ArrayList(uriList?.map { u -> u.path }?.toList()))
+
+        tvTotal.text = "Total images: ${imagePaths.count()}"
+        Picasso.get().load(File(imagePaths[0])).into(ivTemp)
+    }
+
 
 }

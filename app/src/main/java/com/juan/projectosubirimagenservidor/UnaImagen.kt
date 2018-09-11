@@ -212,7 +212,8 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks, Uplo
                             .setTag("uploadTest")
                             .setPriority(Priority.HIGH)
                             .build()
-                            .setUploadProgressListener(this).getAsJSONObject(this)
+                            .setUploadProgressListener(this)
+                            .getAsJSONObject(this)
 
                 }
 
@@ -261,6 +262,8 @@ class UnaImagen : AppCompatActivity(), EasyPermissions.PermissionCallbacks, Uplo
 
     override fun onError(anError: ANError?) {
         Log.e(TAGGER, "[ERROR]")
+
+        dialogPercent?.dismiss()
     }
 
 }
